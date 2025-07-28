@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>vrm</title>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/babylon-vrm-loader/dist/index.js"></script>
+    <script src="./babylon-vrm-loader.js"></script>
+    <style>
+    html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; }
+    </style>
+
+  </head>
+  <body>
+    <canvas id="renderCanvas" width="800" height ="600"></canvas>
+    <script>
+
+var createScene = function (engine, canvas) {
+    const scene = new BABYLON.Scene(engine);
+    const camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0, 1.3, 0.4), scene);
+    camera.attachControl(canvas, true);
+
+    new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -1, 0.3), scene);
+    BABYLON.MeshBuilder.CreateGround("ground", {width: 6, height: 6}, scene);
+
+    function loadVRM(callback) {
+        BABYLON.SceneLoader.Append(
+            'https://raw.githubusercontent.com/vrm-c/UniVRM/master/Tests/Models/Alicia_vrm-0.51/',
+            'AliciaSolid_vrm-0.51.vrm',
+            scene,
+            callback
+        );
+    }
+
+    function onVRMLoaded() {
+        try {
+            const manager = scene.metadata.vrmManagers[0];
+            scene.registerBeforeRender(() => {
+                // Update SpringBone
+                manager.update(scene.getEngine().getDeltaTime());
+            });
+
+            addUI(manager);
+            makePose(manager);
+        } catch (e) {
+            console.log('95', e)
+        }
+    }
+
+    function addUI(manager) {
+        const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        advancedTexture.layer.layerMask = 2;
+
+        const panel3 = new BABYLON.GUI.StackPanel();
+        panel3.width = "220px";
+        panel3.fontSize = "14px";
+        panel3.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        panel3.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        advancedTexture.addControl(panel3);
+
+        function addSlider(text, callback, defaultValue = 0) {
+            const header = new BABYLON.GUI.TextBlock();
+            header.text = text;
+            header.height = "40px";
+            header.color = "white";
+            header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            panel3.addControl(header); 
+
+            const slider = new BABYLON.GUI.Slider();
+            slider.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            slider.minimum = 0;
+            slider.maximum = 1;
+            slider.color = "green";
+            slider.value = defaultValue;
+            slider.height = "20px";
+            slider.width = "200px";
+            slider.onValueChangedObservable.add(callback);
+            callback(defaultValue);
+            panel3.addControl(slider);
+        }
+
+        addSlider('Joy:', (num) => { manager.morphingPreset('joy', num); }, 1);
+        addSlider('Angry:', (num) => { manager.morphingPreset('angry', num); });
+        addSlider('Sorrow:', (num) => { manager.morphingPreset('sorrow', num); });
+        addSlider('Fun:', (num) => { manager.morphingPreset('fun', num); });
+        addSlider('Blink:', (num) => { manager.morphingPreset('blink', num); });
+        addSlider('A:', (num) => { manager.morphingPreset('a', num); }, 1);
+        addSlider('I:', (num) => { manager.morphingPreset('i', num); });
+        addSlider('U:', (num) => { manager.morphingPreset('u', num); });
+        addSlider('E:', (num) => { manager.morphingPreset('e', num); });
+        addSlider('O:', (num) => { manager.morphingPreset('o', num); });
+    }
+
+    function makePose(manager) {
+        const poses = {
+            hips: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            spine: BABYLON.Quaternion.FromEulerAngles(-Math.PI / 20, Math.PI / 20, 0),
+            chest: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            upperChest: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            neck: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            head: BABYLON.Quaternion.FromEulerAngles(0, 0, -Math.PI / 30),
+            leftEye: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftShoulder: BABYLON.Quaternion.FromEulerAngles(0, 0, Math.PI / 4),
+            leftUpperArm: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftLowerArm: BABYLON.Quaternion.FromEulerAngles(0, 0, Math.PI / 4),
+            leftHand: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftThumbProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftThumbIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftThumbDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftIndexProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftIndexIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftIndexDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftMiddleProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftMiddleIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftMiddleDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftRingProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftRingIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftRingDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftLittleProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftLittleIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftLittleDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftUpperLeg: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftLowerLeg: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftFoot: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            leftToe: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightEye: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightShoulder: BABYLON.Quaternion.FromEulerAngles(0, Math.PI / 6, 0),
+            rightUpperArm: BABYLON.Quaternion.FromEulerAngles(0, Math.PI / 4, 0),
+            rightLowerArm: BABYLON.Quaternion.FromEulerAngles(0, Math.PI / 8, 0),
+            rightHand: BABYLON.Quaternion.FromEulerAngles(0, 0, Math.PI / 2),
+            rightThumbProximal: BABYLON.Quaternion.FromEulerAngles(-Math.PI / 8, -Math.PI / 4, 0),
+            rightThumbIntermediate: BABYLON.Quaternion.FromEulerAngles(-Math.PI / 4, 0, 0),
+            rightThumbDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightIndexProximal: BABYLON.Quaternion.FromEulerAngles(0, Math.PI / 12, 0),
+            rightIndexIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightIndexDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightMiddleProximal: BABYLON.Quaternion.FromEulerAngles(0, -Math.PI / 12, 0),
+            rightMiddleIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightMiddleDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightRingProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, -Math.PI / 2),
+            rightRingIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, -Math.PI / 2),
+            rightRingDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightLittleProximal: BABYLON.Quaternion.FromEulerAngles(0, 0, -Math.PI / 2),
+            rightLittleIntermediate: BABYLON.Quaternion.FromEulerAngles(0, 0, -Math.PI / 2),
+            rightLittleDistal: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightUpperLeg: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightLowerLeg: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightFoot: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+            rightToe: BABYLON.Quaternion.FromEulerAngles(0, 0, 0),
+        };
+
+        Object.keys(poses).forEach((boneName) => {
+            if (!manager.humanoidBone[boneName]) {
+                return;
+            }
+            manager.humanoidBone[boneName].rotationQuaternion = poses[boneName];
+        });
+    }
+
+    loadVRM(onVRMLoaded)
+
+    return scene;
+};
+
+async function init() {
+    let canvas = document.getElementById('renderCanvas')
+    canvas.height = window.innerHeight 
+    canvas.width = window.innerWidth
+    let engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer: true, stencil: true})
+
+    scene = await createScene(engine, canvas)
+
+    engine.runRenderLoop(function(){
+      scene.render()
+    });
+}
+
+init()
+
+
+    </script>
+  </body>
+</html>
